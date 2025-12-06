@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERAHOP Integration Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">TERAHOP Employee Addition Integration Test</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Integration</h2>
+            
+            <div class="space-y-4">
+                <button onclick="testBatchIntegration()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Test Batch Integration
+                </button>
+                
+                <button onclick="simulateBatchForm()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Simulate Batch Form Data
+                </button>
+                
+                <button onclick="checkMainSystem()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                    Check Main System Integration
+                </button>
+                
+                <button onclick="clearTestData()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Clear Test Data
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Test Results</h2>
+            <div id="testResults" class="space-y-2 text-sm font-mono bg-gray-50 p-4 rounded">
+                Click a test button to see results...
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">Quick Access</h2>
+            <div class="space-y-2">
+                <a href="terahop_system_enhanced.html" target="_blank" class="block bg-indigo-600 text-white px-4 py-2 rounded text-center hover:bg-indigo-700">
+                    Open Main System
+                </a>
+                <a href="batch_employee_input_fixed.html" target="_blank" class="block bg-teal-600 text-white px-4 py-2 rounded text-center hover:bg-teal-700">
+                    Open Batch Input Form
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const results = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        function testBatchIntegration() {
+            log('Testing batch integration with names...');
+            
+            // Create test data with names
+            const testData = [
+                {
+                    code: 'TEST001',
+                    name: 'ทดสอบ คนที่ 1',
+                    shift: 'A',
+                    mfg: 'MFG-1',
+                    selected: false
+                },
+                {
+                    code: 'TEST002',
+                    name: 'สมศรี รักดี',
+                    shift: 'B',
+                    mfg: 'MFG-2',
+                    selected: false
+                }
+            ];
+            
+            // Save to localStorage
+            localStorage.setItem('batchEmployees', JSON.stringify(testData));
+            
+            // Also save to employee database
+            const employeeDatabase = {};
+            testData.forEach(emp => {
+                employeeDatabase[emp.code] = emp.name;
+            });
+            localStorage.setItem('terahop_employee_db', JSON.stringify(employeeDatabase));
+            
+            log(`✓ Saved ${testData.length} test employees (with names) to localStorage`);
+            log('Data: ' + JSON.stringify(testData, null, 2));
+            log('Database: ' + JSON.stringify(employeeDatabase, null, 2));
+        }
+
+        function simulateBatchForm() {
+            log('Simulating batch form export...');
+            
+            const formData = [
+                {
+                    id: 1,
+                    employeeId: 'EMP001',
+                    name: 'Test Employee',
+                    shift: 'A',
+                    mfg: 'MFG-1'
+                },
+                {
+                    id: 2,
+                    employeeId: 'EMP002',
+                    name: 'สมชาย ใจดี',
+                    shift: 'B',
+                    mfg: 'MFG-2'
+                }
+            ];
+            
+            // Convert to batch format with names
+            const batchFormat = formData.map(emp => ({
+                code: emp.employeeId,
+                name: emp.name,
+                shift: emp.shift,
+                mfg: emp.mfg,
+                selected: false
+            }));
+            
+            // Save to localStorage
+            localStorage.setItem('batchEmployees', JSON.stringify(batchFormat));
+            
+            // Also save to employee database
+            const employeeDatabase = {};
+            batchFormat.forEach(emp => {
+                employeeDatabase[emp.code] = emp.name;
+            });
+            localStorage.setItem('terahop_employee_db', JSON.stringify(employeeDatabase));
+            
+            // Simulate message
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'batch_employees_import',
+                    data: batchFormat
+                }, '*');
+                log('✓ Message sent to parent window');
+            } else {
+                log('⚠ No parent window found (test running standalone)');
+            }
+            
+            log(`✓ Simulated batch form export with ${batchFormat.length} employees (with names)`);
+        }
+
+        function checkMainSystem() {
+            log('Checking main system integration...');
+            
+            const batchData = localStorage.getItem('batchEmployees');
+            const empDbData = localStorage.getItem('terahop_employee_db');
+            
+            if (batchData) {
+                const employees = JSON.parse(batchData);
+                log(`✓ Found ${employees.length} employees in localStorage`);
+                log('Employees:');
+                employees.forEach((emp, index) => {
+                    const name = emp.name || empDbData ? JSON.parse(empDbData)[emp.code] : 'N/A';
+                    log(`  ${index + 1}. ${emp.code} - ${name} - กะ ${emp.shift} - MFG ${emp.mfg}`);
+                });
+            } else {
+                log('✗ No batch employees found in localStorage');
+            }
+            
+            if (empDbData) {
+                const empDb = JSON.parse(empDbData);
+                log(`✓ Employee database contains ${Object.keys(empDb).length} entries`);
+            }
+        }
+
+        function clearTestData() {
+            log('Clearing test data...');
+            localStorage.removeItem('batchEmployees');
+            localStorage.removeItem('terahop_batch_employees');
+            localStorage.removeItem('terahop_employee_db');
+            log('✓ All test data cleared (including employee database)');
+        }
+
+        // Check current status on load
+        window.onload = function() {
+            log('Integration test page loaded');
+            checkMainSystem();
+        };
+    </script>
+</body>
+</html>

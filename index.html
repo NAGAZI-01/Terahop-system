@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TERAHOP">
+  <title>ระบบเช็คเวลาเข้างาน TERAHOP - ENHANCED</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    
+    * {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+    }
+    body {
+        font-family: 'Sarabun', sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
+        overscroll-behavior: none;
+        text-transform: uppercase;
+    }
+    input, select {
+        -webkit-user-select: text;
+        user-select: text;
+        font-size: 16px;
+        text-transform: uppercase;
+    }
+    .btn-active:active {
+        transform: scale(0.95);
+    }
+    .btn-transition {
+        transition: all 0.2s ease;
+    }
+    @media (min-width: 768px) and (max-width: 1024px) {
+        .btn-touch {
+            min-height: 48px;
+        }
+    }
+    html {
+        scroll-behavior: smooth;
+    }
+    .checkbox-wrapper {
+        position: relative;
+    }
+    .checkbox-wrapper input:checked ~ .checkmark {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .activity-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .activity-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .activity-btn {
+        transition: all 0.2s ease;
+        transform: translateY(0);
+    }
+    
+    .activity-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .activity-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .selected-row {
+        background-color: #fef3c7 !important;
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+  </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+  <div id="app" class="container mx-auto px-2 py-2 md:px-4 md:py-4 max-w-6xl">
+    <!-- เมนูนำทาง -->
+    <nav class="bg-white rounded-lg shadow-lg p-3 md:p-4 mb-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-3 md:space-x-4">
+          <div class="bg-indigo-600 text-white p-2 rounded-lg">
+            <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800">ระบบเช็คเวลา TERAHOP - ENHANCED</h1>
+            <p class="text-xs md:text-sm text-gray-600">บริหารจัดการเวลาการทำงานอัจฉริยะ</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="window.open('batch_employee_input_fixed.html', '_blank')" 
+                  class="px-3 py-2 md:px-4 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 btn-transition text-sm md:text-base">
+            <svg class="w-4 h-4 md:w-5 md:h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            添加员工 (เพิ่มพนักงาน)
+          </button>
+          <button id="adminBtn" onclick="handleLogin()" 
+                  class="px-3 py-2 md:px-4 md:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 btn-transition text-sm md:text-base">
+            <svg class="w-4 h-4 md:w-5 md:h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <span id="adminBtnText">ADMIN</span>
+          </button>
+          <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 btn-transition">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ข้อมูลสถานะปัจจุบัน -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-center">
+        <div class="bg-blue-50 rounded-lg p-3">
+          <div class="text-2xl md:text-3xl font-bold text-blue-600" id="currentTime">--:--:--</div>
+          <div class="text-xs md:text-sm text-gray-600">เวลาปัจจุบัน</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-3">
+          <div class="text-2xl md:text-3xl font-bold text-green-600" id="currentDate">--/--/--</div>
+          <div class="text-xs md:text-sm text-gray-600">วันที่ปัจจุบัน</div>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-3">
+          <div class="text-2xl md:text-3xl font-bold text-purple-600" id="totalEmployees">0</div>
+          <div class="text-xs md:text-sm text-gray-600">พนักงานทั้งหมด</div>
+        </div>
+        <div class="bg-orange-50 rounded-lg p-3">
+          <div class="text-2xl md:text-3xl font-bold text-orange-600" id="checkedInCount">0</div>
+          <div class="text-xs md:text-sm text-gray-600">เช็คอินแล้ว</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ฟอร์มเช็คอิน -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+      <h2 class="text-lg md:text-xl font-bold text-gray-800 mb-4">เช็คอินพนักงาน</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">รหัสพนักงาน (员工编号)</label>
+          <div class="flex space-x-2">
+            <input type="text"
+              id="employeeIdInput" value="" placeholder="กรอก รหัสพนักงาน (请输入员工编号)"
+              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+            <input type="checkbox" id="employeeIdCheckbox" class="mt-3">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">กะ (班次)</label>
+          <select id="shiftSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" onchange="updateShiftDisplay()">
+            <option value="A" selected>กะ A (班次 A)</option>
+            <option value="B">กะ B (班次 B)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">MFG</label>
+          <select id="mfgSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" onchange="updateMFGDisplay()">
+            <option value="MFG-1" selected>MFG-1</option>
+            <option value="MFG-2">MFG-2</option>
+            <option value="MFG-3">MFG-3</option>
+            <option value="MFG-4">MFG-4</option>
+            <option value="MFG-5">MFG-5</option>
+            <option value="MFG-6">MFG-6</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- ปุ่มกิจกรรมต่างๆ -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <button onclick="handleAction('checkin')" class="btn-transition btn-active btn-touch bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 font-medium shadow-md">
+          签到 (เช็คอิน)
+        </button>
+        <button onclick="handleAction('lunch_start')" class="btn-transition btn-active btn-touch bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 font-medium shadow-md">
+          午餐 (พักกลางวัน)
+        </button>
+        <button onclick="handleAction('lunch_end')" class="btn-transition btn-active btn-touch bg-orange-400 text-white px-4 py-3 rounded-lg hover:bg-orange-500 font-medium shadow-md">
+          返回 (กลับจากพัก)
+        </button>
+        <button onclick="handleAction('bathroom_start')" class="btn-transition btn-active btn-touch bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium shadow-md">
+          去洗手间 (เข้าห้องน้ำ)
+        </button>
+        <button onclick="handleAction('bathroom_end')" class="btn-transition btn-active btn-touch bg-blue-400 text-white px-4 py-3 rounded-lg hover:bg-blue-500 font-medium shadow-md">
+          返回洗手间 (กลับห้องน้ำ)
+        </button>
+        <button onclick="handleAction('break_start')" class="btn-transition btn-active btn-touch bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 font-medium shadow-md">
+          休息时间 (พักเบรก)
+        </button>
+        <button onclick="handleAction('break_end')" class="btn-transition btn-active btn-touch bg-purple-400 text-white px-4 py-3 rounded-lg hover:bg-purple-500 font-medium shadow-md col-span-2 md:col-span-1">
+          กลับจากเบรก (返回休息)
+        </button>
+      </div>
+    </div>
+
+    <!-- รายการพนักงานจาก Batch Input -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg md:text-xl font-bold text-gray-800">
+          รายการพนักงานที่เพิ่ม (กะ ${selectedShift}, MFG ${selectedMFG})
+        </h2>
+        <div class="flex gap-2">
+          <button onclick="checkInAllBatchEmployees()" class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+            全部签到 (เช็คอินทั้งหมด)
+          </button>
+          <button onclick="selectAllBatchEmployees()" class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+            全选 (เลือกทั้งหมด)
+          </button>
+          <button onclick="deselectAllBatchEmployees()" class="px-3 py-1 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors">
+            全部取消 (ยกเลิกทั้งหมด)
+          </button>
+        </div>
+      </div>
+      
+      <div id="batchEmployeeList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="text-center py-8 text-gray-500 md:col-span-2 lg:col-span-3">
+          <svg class="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+          <p class="text-sm md:text-base">ยังไม่มีข้อมูลพนักงาน</p>
+          <p class="text-xs md:text-sm">คลิก "เพิ่มพนักงาน" เพื่อเพิ่มรายการจากหน้า BATCH INPUT</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ตารางรายการพนักงาน -->
+    <div class="bg-white rounded-lg shadow-lg p-4 md:p-6">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-2">
+        <div class="flex items-center gap-2">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-6 h-6 text-indigo-600">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <h2 class="text-lg md:text-xl font-bold text-gray-800" id="tableTitle">
+            รายการพนักงาน - กะ A - MFG-1 (员工列表 - 班次 A - MFG-1)
+          </h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <p class="text-sm text-gray-600">จำนวน: <span id="employeeCount" class="font-semibold">0</span> คน</p>
+          <p class="text-sm text-gray-600">เลือกแล้ว: <span id="selectedCount" class="font-semibold text-green-600">0</span> คน</p>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllEmployees()" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                  <span>เลือก</span>
+                </div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัส/ชื่อ</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กะ</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MFG</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เช็คอิน</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">พักกลางวัน</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ห้องน้ำ</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">พักเบรก</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTableBody" class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                ไม่มีข้อมูลพนักงาน
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ปุ่มดำเนินการ -->
+      <div class="mt-6 flex flex-wrap gap-2 justify-between">
+        <div class="flex gap-2">
+          <button onclick="selectAllEmployees()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 btn-transition text-sm">
+            全选 (เลือกทั้งหมด)
+          </button>
+          <button onclick="deselectAllEmployees()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 btn-transition text-sm">
+            全部取消 (ยกเลิกทั้งหมด)
+          </button>
+          <button onclick="showActivityModal()" id="activityModalBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 btn-transition text-sm pulse-animation" disabled>
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+            为选定用户选择活动 (เลือกกิจกรรมสำหรับผู้ที่เลือก)
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button id="exportBtn" onclick="exportToExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 btn-transition text-sm" disabled>
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            导出Excel
+          </button>
+          <button id="importBtn" onclick="importCSV()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 btn-transition text-sm" disabled>
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            导入CSV (นำเข้า CSV)
+          </button>
+          <button id="clearBtn" onclick="clearAllData()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 btn-transition text-sm" disabled>
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            清除数据 (ล้างข้อมูล)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY SELECTION MODAL -->
+  <div id="activityModal" class="activity-modal" style="display: none;">
+    <div class="activity-card">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-800">เลือกกิจกรรมสำหรับพนักงานที่เลือก</h3>
+        <button onclick="closeActivityModal()" class="text-gray-400 hover:text-gray-600" title="关闭 (ปิด)">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="mb-4">
+        <p class="text-sm text-gray-600">พนักงานที่เลือก: <span id="modalSelectedCount" class="font-semibold text-blue-600">0</span> คน</p>
+        <p class="text-xs text-gray-500 mt-1">กะ: <span id="modalShift" class="font-medium">${selectedShift}</span> | MFG: <span id="modalMFG" class="font-medium">${selectedMFG}</span></p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="performBulkActivity('checkin')" class="activity-btn bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+          </svg>
+          <div>签到 (เช็คอิน)</div>
+          <div class="text-xs opacity-75">CHECK IN</div>
+          <div class="text-xs opacity-50 mt-1">签到</div>
+        </button>
+
+        <button onclick="performBulkActivity('lunch_start')" class="activity-btn bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+          <div>开始午休 (เริ่มพักกลางวัน)</div>
+          <div class="text-xs opacity-75">START LUNCH</div>
+          <div class="text-xs opacity-50 mt-1">开始午餐</div>
+        </button>
+
+        <button onclick="performBulkActivity('lunch_end')" class="activity-btn bg-orange-400 hover:bg-orange-500 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          <div>结束午休 (สิ้นสุดพักกลางวัน)</div>
+          <div class="text-xs opacity-75">END LUNCH</div>
+          <div class="text-xs opacity-50 mt-1">结束午餐</div>
+        </button>
+
+        <button onclick="performBulkActivity('bathroom_start')" class="activity-btn bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+          </svg>
+          <div>去洗手间 (เข้าห้องน้ำ)</div>
+          <div class="text-xs opacity-75">BATHROOM START</div>
+          <div class="text-xs opacity-50 mt-1">进入洗手间</div>
+        </button>
+
+        <button onclick="performBulkActivity('bathroom_end')" class="activity-btn bg-blue-400 hover:bg-blue-500 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <div>返回洗手间 (กลับจากห้องน้ำ)</div>
+          <div class="text-xs opacity-75">BATHROOM END</div>
+          <div class="text-xs opacity-50 mt-1">离开洗手间</div>
+        </button>
+
+        <button onclick="performBulkActivity('break_start')" class="activity-btn bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+          <div>开始休息 (เริ่มพักเบรก)</div>
+          <div class="text-xs opacity-75">START BREAK</div>
+          <div class="text-xs opacity-50 mt-1">开始休息</div>
+        </button>
+
+        <button onclick="performBulkActivity('break_end')" class="activity-btn bg-purple-400 hover:bg-purple-500 text-white p-4 rounded-lg font-medium text-center">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+          </svg>
+          <div>结束休息 (สิ้นสุดพักเบรก)</div>
+          <div class="text-xs opacity-75">END BREAK</div>
+          <div class="text-xs opacity-50 mt-1">结束休息</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ตัวแปรส่วนกลาง
+    let employees = {};
+    let batchEmployees = [];
+    let checkInRecords = [];
+    let selectedEmployees = {};
+    let employeeDatabase = {};
+    let employeeId = '';
+    let selectedShift = 'A';
+    let selectedMFG = 'MFG-1';
+    let currentTime = new Date();
+    let isAdmin = false;
+    const ADMIN_PASSWORD = 'Admin';
+
+    // ข้อมูลตัวอย่างพนักงาน
+    const sampleEmployeeDatabase = {
+      'C20001': 'สมชาย ใจดี',
+      'C20002': 'สมศรี รักดี',
+      'C20003': 'วีระชัย แข็งแกร่ง',
+      'C20004': 'นาตาลี่ มั่นคง',
+      'C20005': 'ธีรพงษ์ สุขสันต์'
+    };
+
+    // เริ่มต้นแอปพลิเคชัน
+    function init() {
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+      loadStoredData();
+      loadBatchEmployees();
+      renderEmployeeTable();
+      updateStats();
+      setupEventListeners();
+      updateShiftDisplay();
+      updateMFGDisplay();
+      updateAdminUI();
+      updateBatchEmployeeListTitle();
+      setupMessageListener();
+      // Check for new batch employees every 2 seconds
+      setInterval(checkForBatchUpdates, 2000);
+    }
+
+    // ตั้งค่า Event Listeners
+    function setupEventListeners() {
+      document.getElementById('employeeIdInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          checkIn();
+        }
+      });
+
+      document.getElementById('shiftSelect').addEventListener('change', function() {
+        selectedShift = this.value;
+        renderEmployeeTable();
+        renderBatchEmployeeList();
+        updateShiftDisplay();
+        updateBatchEmployeeListTitle();
+        updateActivityModalButton();
+      });
+
+      document.getElementById('mfgSelect').addEventListener('change', function() {
+        selectedMFG = this.value;
+        renderEmployeeTable();
+        renderBatchEmployeeList();
+        updateMFGDisplay();
+        updateBatchEmployeeListTitle();
+        updateActivityModalButton();
+      });
+    }
+
+    // Update batch employee list title
+    function updateBatchEmployeeListTitle() {
+      const titles = document.querySelectorAll('h2');
+      titles.forEach(title => {
+        if (title.textContent.includes('รายการพนักงานที่เพิ่ม')) {
+          title.textContent = `รายการพนักงานที่เพิ่ม (กะ ${selectedShift}, MFG ${selectedMFG})`;
+        }
+      });
+    }
+
+    // อัปเดตการแสดงผลกะและ MFG ในหัวตาราง
+    function updateShiftDisplay() {
+      selectedShift = document.getElementById('shiftSelect').value;
+      const tableTitle = document.getElementById('tableTitle');
+      tableTitle.textContent = `รายการพนักงาน - กะ ${selectedShift} - ${selectedMFG} (员工列表 - 班次 ${selectedShift} - ${selectedMFG})`;
+    }
+
+    function updateMFGDisplay() {
+      selectedMFG = document.getElementById('mfgSelect').value;
+      const tableTitle = document.getElementById('tableTitle');
+      tableTitle.textContent = `รายการพนักงาน - กะ ${selectedShift} - ${selectedMFG} (员工列表 - 班次 ${selectedShift} - ${selectedMFG})`;
+    }
+
+    // อัปเดตวันที่และเวลา
+    function updateDateTime() {
+      const now = new Date();
+      currentTime = now;
+      const timeStr = now.toLocaleTimeString('th-TH');
+      const dateStr = now.toLocaleDateString('th-TH');
+      
+      document.getElementById('currentTime').textContent = timeStr;
+      document.getElementById('currentDate').textContent = dateStr;
+    }
+
+    // ฟังก์ชันเช็คอิน
+    function checkIn() {
+      const employeeIdInput = document.getElementById('employeeIdInput').value.trim();
+      const isChecked = document.getElementById('employeeIdCheckbox').checked;
+      const shift = document.getElementById('shiftSelect').value;
+      const mfg = document.getElementById('mfgSelect').value;
+      
+      if (!employeeIdInput) {
+        alert('กรุณาใส่รหัสพนักงาน (请填写员工编号)');
+        return;
+      }
+
+      handleAction('checkin');
+    }
+
+    // จัดการกิจกรรมต่างๆ
+    function handleAction(action) {
+      const empId = document.getElementById('employeeIdInput').value.trim();
+      const isChecked = document.getElementById('employeeIdCheckbox').checked;
+      const shift = document.getElementById('shiftSelect').value;
+      const mfg = document.getElementById('mfgSelect').value;
+      
+      if (!empId) {
+        alert('กรุณาใส่รหัสพนักงาน (请填写员工编号)');
+        return;
+      }
+
+      const key = getEmployeeKey(empId, shift, mfg);
+      const now = new Date();
+      let current = employees[key];
+
+      if (!current) {
+        if (action !== 'checkin') {
+          alert('กรุณาเช็คอินก่อน (请先签到)');
+          return;
+        }
+        current = {
+          id: empId,
+          name: employeeDatabase[empId] || sampleEmployeeDatabase[empId] || 'ไม่ทราบชื่อ',
+          shift: shift,
+          mfg: mfg,
+          checkInTime: null,
+          breaks: [],
+          bathroomVisits: [],
+          lunchBreak: null,
+          status: 'ปกติ',
+          currentAction: null,
+          lastUpdate: null
+        };
+      }
+
+      let status = current.status;
+
+      switch (action) {
+        case 'checkin':
+          employees[key] = {
+            ...current,
+            checkInTime: now.toISOString(),
+            lastUpdate: now.toISOString()
+          };
+          // Auto-select new employee
+          selectedEmployees[key] = true;
+          saveSelectedEmployees();
+          showNotification(`พนักงาน ${empId} เช็คอินแล้ว ✓`, 'success');
+          break;
+        case 'lunch_start':
+          if (current.currentAction === 'lunch') {
+            alert('คุณอยู่ในช่วงพักกลางวัน/คุณอยู่แล้ว (您已经在午休时间)');
+            return;
+          }
+          employees[key] = {
+            ...current,
+            lunchBreak: { start: now.toISOString() },
+            currentAction: 'lunch',
+            lastUpdate: now.toISOString()
+          };
+          showNotification(`พนักงาน ${empId} เริ่มพักกลางวัน`, 'info');
+          break;
+        case 'lunch_end':
+          if (!current.lunchBreak?.start || current.lunchBreak?.end) {
+            alert('ไม่พบการเริ่มพักกลางวัน/คุณ (未找到开始午休的记录)');
+            return;
+          }
+          const lunchDuration = Math.floor((now - new Date(current.lunchBreak.start)) / 1000 / 60);
+          if (lunchDuration > 60) status = 'ผิดปกติ';
+          employees[key] = {
+            ...current,
+            lunchBreak: { ...current.lunchBreak, end: now.toISOString(), duration: lunchDuration },
+            currentAction: null,
+            status,
+            lastUpdate: now.toISOString()
+          };
+          showNotification(`พนักงาน ${empId} กลับจากพักกลางวัน (${lunchDuration} นาที)`, 'info');
+          break;
+        case 'bathroom_start':
+          if (current.currentAction === 'bathroom') {
+            alert('คุณอยู่ในห้องน้ำอยู่แล้ว (您已经在洗手间)');
+            return;
+          }
+          employees[key] = {
+            ...current,
+            bathroomVisits: [...current.bathroomVisits, { start: now.toISOString() }],
+            currentAction: 'bathroom',
+            lastUpdate: now.toISOString()
+          };
+          showNotification(`พนักงาน ${empId} เข้าห้องน้ำ`, 'info');
+          break;
+        case 'bathroom_end':
+          const lastBathroom = current.bathroomVisits[current.bathroomVisits.length - 1];
+          if (!lastBathroom || lastBathroom.end) {
+            alert('ไม่พบการเริ่มเข้าห้องน้ำ (未找到进入洗手间的记录)');
+            return;
+          }
+          const bathroomDuration = Math.floor((now - new Date(lastBathroom.start)) / 1000 / 60);
+          if (bathroomDuration > 15) status = 'ผิดปกติ';
+          const updatedBathroom = [...current.bathroomVisits];
+          updatedBathroom[updatedBathroom.length - 1] = { ...lastBathroom, end: now.toISOString(), duration: bathroomDuration };
+          employees[key] = {
+            ...current,
+            bathroomVisits: updatedBathroom,
+            currentAction: null,
+            status: status === 'ผิดปกติ' ? 'ผิดปกติ' : current.status,
+            lastUpdate: now.toISOString()
+          };
+          showNotification(`พนักงาน ${empId} กลับจากห้องน้ำ (${bathroomDuration} นาที)`, 'info');
+          break;
+        case 'break_start':
+          if (current.currentAction === 'break') {
+            alert('คุณอยู่ในช่วงพักเบรกอยู่แล้ว (您已经在休息时间)');
+            return;
+          }
+          employees[key] = {
+            ...current,
+            breaks: [...current.breaks, { start: now.toISOString() }],
+            currentAction: 'break',
+            lastUpdate: now.toISOString()
+          };
+          showNotification(`พนักงาน ${empId} เริ่มพักเบรก`, 'info');
+          break;
+        case 'break_end':
+          const lastBreak = current.breaks[current.breaks.length - 1];
+          if (!lastBreak || lastBreak.end) {
+            alert('ไม่พบการเริ่มพักเบรก (未找到开始休息的记录)');
+            return;
+          }
+          const breakDuration = Math.floor((now - new Date(lastBreak.start)) / 1000 / 60);
+          if (breakDuration > 15) status = 'ผิดปกติ';
+          const updatedBreaks = [...current.breaks];
+          updatedBreaks[updatedBreaks.length - 1] = { ...lastBreak, end: now.toISOString(), duration: breakDuration };
+          employees[key] = {
+            ...current,
+            breaks: updatedBreaks,
+            currentAction: null,
+            status: status === 'ผิดปกติ' ? 'ผิดปกติ' : current.status,
+            lastUpdate: now.toISOString()
+          };
+          showNotification(`พนักงาน ${empId} กลับจากพักเบรก (${breakDuration} นาที)`, 'info');
+          break;
+      }
+
+      saveData();
+      renderEmployeeTable();
+      updateStats();
+
+      // ล้างฟอร์ม
+      document.getElementById('employeeIdInput').value = '';
+      document.getElementById('employeeIdCheckbox').checked = false;
+      document.getElementById('employeeIdInput').focus();
+    }
+
+    // ฟังก์ชันสำหรับ BATCH EMPLOYEES
+    function loadBatchEmployees() {
+      const stored = localStorage.getItem('batchEmployees');
+      if (stored) {
+        batchEmployees = JSON.parse(stored);
+        renderBatchEmployeeList();
+        updateStats();
+      }
+    }
+
+    function renderBatchEmployeeList() {
+      const container = document.getElementById('batchEmployeeList');
+      
+      // กรองแสดงรายการ batch employees ตามกะและ MFG ที่เลือก
+      const filteredBatchEmployees = batchEmployees.filter(emp => 
+        emp.shift === selectedShift && emp.mfg === selectedMFG
+      );
+      
+      if (filteredBatchEmployees.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-500 md:col-span-2 lg:col-span-3">
+            <svg class="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-sm md:text-base">ยังไม่มีรายการพนักงานรอเพิ่มในกะ ${selectedShift} และ MFG ${selectedMFG}</p>
+            <p class="text-xs md:text-sm">กรุณาไปที่หน้า BATCH INPUT เพื่อเพิ่มพนักงานในกะและ MFG นี้</p>
+            <p class="text-xs md:text-sm mt-2">หรือกรอกรหัสพนักงานด้านบนเพื่อเช็คอินทันที</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const html = filteredBatchEmployees.map((emp, index) => {
+        const originalIndex = batchEmployees.indexOf(emp);
+        const isSelected = emp.selected || false;
+        const employeeName = emp.name || employeeDatabase[emp.code] || `พนักงาน ${emp.code}`;
+        return `
+        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 fade-in ${isSelected ? 'ring-2 ring-green-500' : ''}">
+          <div class="flex items-center space-x-2">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                   onchange="toggleBatchEmployeeSelection(${originalIndex})"
+                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+            <div>
+              <p class="font-medium text-gray-900 text-sm">${emp.code}</p>
+              <p class="text-xs text-gray-800 font-medium">${employeeName}</p>
+              <p class="text-xs text-gray-500">กะ ${emp.shift} | MFG ${emp.mfg}</p>
+            </div>
+          </div>
+          <div class="flex gap-1">
+            <button onclick="quickCheckIn('${emp.code}')" 
+                    class="px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors">
+              เช็คอิน
+            </button>
+            <button onclick="removeBatchEmployee(${originalIndex})" 
+                    class="px-2 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors">
+              ลบ
+            </button>
+          </div>
+        </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+    }
+
+    function quickCheckIn(employeeCode) {
+      // Get employee name for better feedback
+      const batchEmployee = batchEmployees.find(emp => emp.code === employeeCode);
+      const employeeName = batchEmployee?.name || employeeDatabase[employeeCode] || `พนักงาน ${employeeCode}`;
+      
+      // Store the name in database if not already there
+      if (!employeeDatabase[employeeCode] && batchEmployee?.name) {
+        employeeDatabase[employeeCode] = batchEmployee.name;
+        saveEmployeeDatabase();
+      }
+      
+      document.getElementById('employeeIdInput').value = employeeCode;
+      handleAction('checkin');
+    }
+
+    function checkInAllBatchEmployees() {
+      const filteredBatchEmployees = batchEmployees.filter(emp => 
+        emp.shift === selectedShift && emp.mfg === selectedMFG
+      );
+      
+      if (filteredBatchEmployees.length === 0) {
+        alert(`ไม่มีพนักงานในกะ ${selectedShift} และ MFG ${selectedMFG} ที่จะเช็คอิน`);
+        return;
+      }
+      
+      let successCount = 0;
+      const employeeIds = filteredBatchEmployees.map(emp => emp.code);
+      
+      employeeIds.forEach(empId => {
+        const key = getEmployeeKey(empId, selectedShift, selectedMFG);
+        const now = new Date();
+        
+        if (!employees[key]) {
+          // Get employee name from batch data or database
+          const batchEmployee = filteredBatchEmployees.find(emp => emp.code === empId);
+          const employeeName = batchEmployee?.name || employeeDatabase[empId] || sampleEmployeeDatabase[empId] || `พนักงาน ${empId}`;
+          
+          employees[key] = {
+            id: empId,
+            name: employeeName,
+            shift: selectedShift,
+            mfg: selectedMFG,
+            checkInTime: now.toISOString(),
+            breaks: [],
+            bathroomVisits: [],
+            lunchBreak: null,
+            status: 'ปกติ',
+            currentAction: null,
+            lastUpdate: now.toISOString()
+          };
+          // Auto-select new employee
+          selectedEmployees[key] = true;
+          successCount++;
+        }
+      });
+      
+      if (successCount > 0) {
+        saveData();
+        saveSelectedEmployees();
+        renderEmployeeTable();
+        updateStats();
+        showNotification(`เช็คอินสำเร็จ ${successCount} พนักงาน`, 'success');
+      } else {
+        alert('พนักงานทั้งหมดเช็คอินแล้ว');
+      }
+    }
+
+    function removeBatchEmployee(index) {
+      if (confirm('ต้องการลบรายการพนักงานนี้หรือไม่?')) {
+        const emp = batchEmployees[index];
+        batchEmployees.splice(index, 1);
+        localStorage.setItem('batchEmployees', JSON.stringify(batchEmployees));
+        renderBatchEmployeeList();
+        updateStats();
+        showNotification(`ลบรายการพนักงาน ${emp.code} เรียบร้อย`, 'info');
+      }
+    }
+
+    // ฟังก์ชันสำหรับการเลือกพนักงานใน BATCH LIST
+    function toggleBatchEmployeeSelection(index) {
+      batchEmployees[index].selected = !batchEmployees[index].selected;
+      localStorage.setItem('batchEmployees', JSON.stringify(batchEmployees));
+      renderBatchEmployeeList();
+    }
+
+    function selectAllBatchEmployees() {
+      const filteredBatchEmployees = batchEmployees.filter(emp => 
+        emp.shift === selectedShift && emp.mfg === selectedMFG
+      );
+      filteredBatchEmployees.forEach(emp => {
+        emp.selected = true;
+      });
+      localStorage.setItem('batchEmployees', JSON.stringify(batchEmployees));
+      renderBatchEmployeeList();
+      showNotification('เลือกพนักงานทั้งหมด', 'success');
+    }
+
+    function deselectAllBatchEmployees() {
+      const filteredBatchEmployees = batchEmployees.filter(emp => 
+        emp.shift === selectedShift && emp.mfg === selectedMFG
+      );
+      filteredBatchEmployees.forEach(emp => {
+        emp.selected = false;
+      });
+      localStorage.setItem('batchEmployees', JSON.stringify(batchEmployees));
+      renderBatchEmployeeList();
+      showNotification('ยกเลิกการเลือกทั้งหมด', 'info');
+    }
+
+    // ฟังก์ชันตารางพนักงาน
+    function renderEmployeeTable() {
+      const tbody = document.getElementById('employeeTableBody');
+      const filteredEmployees = getFilteredEmployees();
+
+      if (filteredEmployees.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+              ไม่มีข้อมูลพนักงาน
+            </td>
+          </tr>
+        `;
+        document.getElementById('employeeCount').textContent = '0';
+        updateActivityModalButton();
+        return;
+      }
+
+      document.getElementById('employeeCount').textContent = filteredEmployees.length;
+
+      const html = filteredEmployees.map((record, index) => {
+        const key = getEmployeeKey(record.id, record.shift, record.mfg);
+        const isSelected = selectedEmployees[key];
+        
+        // คำนวณเวลาที่ใช้ไป
+        const now = new Date();
+        const checkInDate = record.checkInTime ? new Date(record.checkInTime) : null;
+        const lunchTotalTime = record.lunchBreak?.duration || 0;
+        const bathroomTotalTime = record.bathroomVisits.reduce((sum, b) => sum + (b.duration || 0), 0);
+        const breakTotalTime = record.breaks.reduce((sum, b) => sum + (b.duration || 0), 0);
+        
+        // ฟังก์ชันแปลงนาทีเป็นรูปแบบชั่วโมง:นาที
+        function formatDuration(minutes) {
+          if (minutes >= 60) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}ชม ${mins}นาที`;
+          }
+          return `${minutes}นาที`;
+        }
+        
+        // สถานะปัจจุบัน
+        let currentActionText = record.checkInTime ? 'ปฏิบัติงาน' : 'ยังไม่เช็คอิน';
+        if (record.currentAction === 'lunch') {
+          currentActionText = 'พักกลางวัน';
+        } else if (record.currentAction === 'bathroom') {
+          currentActionText = 'ห้องน้ำ';
+        } else if (record.currentAction === 'break') {
+          currentActionText = 'พักเบรก';
+        }
+
+        return `
+          <tr class="hover:bg-gray-50 fade-in ${isSelected ? 'selected-row' : ''}">
+            <td class="px-4 py-3 whitespace-nowrap">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                     onchange="toggleEmployeeSelection('${key}')"
+                     class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+              <div class="flex flex-col">
+                <span class="font-semibold">${record.id}</span>
+                <span class="text-xs text-gray-500">${record.name || ''}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+              ${record.shift}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+              ${record.mfg}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+              ${checkInDate ? checkInDate.toLocaleDateString('th-TH') + ' ' + checkInDate.toLocaleTimeString('th-TH') : 'ยังไม่เช็คอิน'}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+              ${formatDuration(lunchTotalTime)}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+              ${formatDuration(bathroomTotalTime)}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+              ${formatDuration(breakTotalTime)}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                !record.checkInTime ? 'bg-gray-100 text-gray-800' :
+                record.status === 'ผิดปกติ' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+              }">
+                ${currentActionText}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = html;
+      updateSelectedCount();
+      updateActivityModalButton();
+    }
+
+    // ฟังก์ชันเลือกพนักงาน
+    function toggleEmployeeSelection(employeeKey) {
+      selectedEmployees[employeeKey] = !selectedEmployees[employeeKey];
+      saveSelectedEmployees();
+      updateSelectedCount();
+      updateActivityModalButton();
+      renderEmployeeTable();
+    }
+
+    function toggleAllEmployees() {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const filteredEmployees = getFilteredEmployees();
+      
+      filteredEmployees.forEach(emp => {
+        const key = getEmployeeKey(emp.id, emp.shift, emp.mfg);
+        selectedEmployees[key] = selectAllCheckbox.checked;
+      });
+      
+      saveSelectedEmployees();
+      updateSelectedCount();
+      updateActivityModalButton();
+      renderEmployeeTable();
+    }
+
+    function selectAllEmployees() {
+      const filteredEmployees = getFilteredEmployees();
+      filteredEmployees.forEach(emp => {
+        const key = getEmployeeKey(emp.id, emp.shift, emp.mfg);
+        selectedEmployees[key] = true;
+      });
+      saveSelectedEmployees();
+      updateSelectedCount();
+      updateActivityModalButton();
+      renderEmployeeTable();
+    }
+
+    function deselectAllEmployees() {
+      const filteredEmployees = getFilteredEmployees();
+      filteredEmployees.forEach(emp => {
+        const key = getEmployeeKey(emp.id, emp.shift, emp.mfg);
+        delete selectedEmployees[key];
+      });
+      saveSelectedEmployees();
+      updateSelectedCount();
+      updateActivityModalButton();
+      renderEmployeeTable();
+    }
+
+    function updateSelectedCount() {
+      const filteredEmployees = getFilteredEmployees();
+      let selectedCount = 0;
+      
+      filteredEmployees.forEach(emp => {
+        const key = getEmployeeKey(emp.id, emp.shift, emp.mfg);
+        if (selectedEmployees[key]) selectedCount++;
+      });
+      
+      document.getElementById('selectedCount').textContent = selectedCount;
+    }
+
+    function updateActivityModalButton() {
+      const selectedCount = parseInt(document.getElementById('selectedCount').textContent);
+      const activityModalBtn = document.getElementById('activityModalBtn');
+      
+      if (selectedCount > 0) {
+        activityModalBtn.disabled = false;
+        activityModalBtn.classList.add('pulse-animation');
+      } else {
+        activityModalBtn.disabled = true;
+        activityModalBtn.classList.remove('pulse-animation');
+      }
+    }
+
+    // ฟังก์ชัน MODAL สำหรับเลือกกิจกรรม
+    function showActivityModal() {
+      const selectedCount = parseInt(document.getElementById('selectedCount').textContent);
+      
+      if (selectedCount === 0) {
+        alert('กรุณาเลือกพนักงานอย่างน้อย 1 คน');
+        return;
+      }
+
+      document.getElementById('modalSelectedCount').textContent = selectedCount;
+      document.getElementById('modalShift').textContent = selectedShift;
+      document.getElementById('modalMFG').textContent = selectedMFG;
+      document.getElementById('activityModal').style.display = 'flex';
+    }
+
+    function closeActivityModal() {
+      document.getElementById('activityModal').style.display = 'none';
+    }
+
+    function performBulkActivity(action) {
+      const selectedList = [];
+      const filteredEmployees = getFilteredEmployees();
+      
+      // เพิ่มพนักงานจากตารางหลักที่อยู่ในกะและ MFG ที่เลือก
+      filteredEmployees.forEach(emp => {
+        const key = getEmployeeKey(emp.id, emp.shift, emp.mfg);
+        if (selectedEmployees[key]) {
+          selectedList.push(emp.id);
+        }
+      });
+
+      if (selectedList.length === 0) {
+        alert(`กรุณาเลือกพนักงานจากกะ ${selectedShift} และ MFG ${selectedMFG} อย่างน้อย 1 คน`);
+        return;
+      }
+
+      closeActivityModal();
+      performActionForMultipleEmployees(selectedList, action);
+    }
+
+    function performActionForMultipleEmployees(employeeIds, action) {
+      let successCount = 0;
+      const currentShift = document.getElementById('shiftSelect').value;
+      const currentMFG = document.getElementById('mfgSelect').value;
+
+      employeeIds.forEach(empId => {
+        const key = getEmployeeKey(empId, currentShift, currentMFG);
+        const now = new Date();
+        let current = employees[key];
+
+        if (!current && action !== 'checkin') {
+          return; // ข้ามพนักงานที่ยังไม่เช็คอินสำหรับ action อื่นๆ
+        }
+
+        if (!current) {
+          current = {
+            id: empId,
+            name: employeeDatabase[empId] || sampleEmployeeDatabase[empId] || 'ไม่ทราบชื่อ',
+            shift: currentShift,
+            mfg: currentMFG,
+            checkInTime: null,
+            breaks: [],
+            bathroomVisits: [],
+            lunchBreak: null,
+            status: 'ปกติ',
+            currentAction: null,
+            lastUpdate: null
+          };
+        }
+
+        // ทำการตาม action
+        switch (action) {
+          case 'checkin':
+            employees[key] = {
+              ...current,
+              checkInTime: now.toISOString(),
+              lastUpdate: now.toISOString()
+            };
+            successCount++;
+            break;
+          case 'lunch_start':
+            if (current.currentAction !== 'lunch') {
+              employees[key] = {
+                ...current,
+                lunchBreak: { start: now.toISOString() },
+                currentAction: 'lunch',
+                lastUpdate: now.toISOString()
+              };
+              successCount++;
+            }
+            break;
+          case 'lunch_end':
+            if (current.lunchBreak?.start && !current.lunchBreak?.end && current.currentAction === 'lunch') {
+              const lunchDuration = Math.floor((now - new Date(current.lunchBreak.start)) / 1000 / 60);
+              employees[key] = {
+                ...current,
+                lunchBreak: { ...current.lunchBreak, end: now.toISOString(), duration: lunchDuration },
+                currentAction: null,
+                status: lunchDuration > 60 ? 'ผิดปกติ' : current.status,
+                lastUpdate: now.toISOString()
+              };
+              successCount++;
+            }
+            break;
+          case 'bathroom_start':
+            if (current.currentAction !== 'bathroom') {
+              employees[key] = {
+                ...current,
+                bathroomVisits: [...current.bathroomVisits, { start: now.toISOString() }],
+                currentAction: 'bathroom',
+                lastUpdate: now.toISOString()
+              };
+              successCount++;
+            }
+            break;
+          case 'bathroom_end':
+            const lastBathroom = current.bathroomVisits[current.bathroomVisits.length - 1];
+            if (lastBathroom && !lastBathroom.end && current.currentAction === 'bathroom') {
+              const bathroomDuration = Math.floor((now - new Date(lastBathroom.start)) / 1000 / 60);
+              const updatedBathroom = [...current.bathroomVisits];
+              updatedBathroom[updatedBathroom.length - 1] = { ...lastBathroom, end: now.toISOString(), duration: bathroomDuration };
+              employees[key] = {
+                ...current,
+                bathroomVisits: updatedBathroom,
+                currentAction: null,
+                status: bathroomDuration > 15 ? 'ผิดปกติ' : current.status,
+                lastUpdate: now.toISOString()
+              };
+              successCount++;
+            }
+            break;
+          case 'break_start':
+            if (current.currentAction !== 'break') {
+              employees[key] = {
+                ...current,
+                breaks: [...current.breaks, { start: now.toISOString() }],
+                currentAction: 'break',
+                lastUpdate: now.toISOString()
+              };
+              successCount++;
+            }
+            break;
+          case 'break_end':
+            const lastBreak = current.breaks[current.breaks.length - 1];
+            if (lastBreak && !lastBreak.end && current.currentAction === 'break') {
+              const breakDuration = Math.floor((now - new Date(lastBreak.start)) / 1000 / 60);
+              const updatedBreaks = [...current.breaks];
+              updatedBreaks[updatedBreaks.length - 1] = { ...lastBreak, end: now.toISOString(), duration: breakDuration };
+              employees[key] = {
+                ...current,
+                breaks: updatedBreaks,
+                currentAction: null,
+                status: breakDuration > 15 ? 'ผิดปกติ' : current.status,
+                lastUpdate: now.toISOString()
+              };
+              successCount++;
+            }
+            break;
+        }
+      });
+
+      saveData();
+      renderEmployeeTable();
+      updateStats();
+      showNotification(`ดำเนินการสำเร็จ ${successCount} รายการ (กะ ${selectedShift}, MFG ${selectedMFG})`, 'success');
+    }
+
+    // ฟังก์ชันอื่นๆ
+    function getFilteredEmployees() {
+      // Get only checked-in employees for the currently selected shift and MFG
+      const filteredEmployees = Object.values(employees).filter(emp => 
+        emp.shift === selectedShift && emp.mfg === selectedMFG && emp.checkInTime !== null
+      );
+      
+      return filteredEmployees;
+    }
+
+    function getEmployeeKey(empId, shift, mfg) {
+      return `${empId}_${shift}_${mfg}`;
+    }
+
+    function updateStats() {
+      const filteredEmployees = getFilteredEmployees();
+      const totalEmp = filteredEmployees.length;
+      // ทุกรายการในตารางคือพนักงานที่เช็คอินแล้ว
+      const checkedIn = totalEmp;
+      
+      document.getElementById('totalEmployees').textContent = totalEmp;
+      document.getElementById('checkedInCount').textContent = checkedIn;
+    }
+
+    function saveData() {
+      localStorage.setItem('terahop_employees', JSON.stringify(employees));
+    }
+
+    function saveSelectedEmployees() {
+      localStorage.setItem('terahop_selected_employees', JSON.stringify(selectedEmployees));
+    }
+
+    function loadStoredData() {
+      const storedEmployees = localStorage.getItem('terahop_employees');
+      const storedSelected = localStorage.getItem('terahop_selected_employees');
+      const storedDB = localStorage.getItem('terahop_employee_db');
+
+      if (storedEmployees) {
+        employees = JSON.parse(storedEmployees);
+      }
+      if (storedSelected) {
+        selectedEmployees = JSON.parse(storedSelected);
+      }
+      if (storedDB) {
+        employeeDatabase = JSON.parse(storedDB);
+      } else {
+        employeeDatabase = { ...sampleEmployeeDatabase };
+      }
+    }
+
+    // จัดการการล็อกอิน/ล็อกเอาท์ ADMIN
+    function handleLogin() {
+      if (isAdmin) {
+        handleLogout();
+      } else {
+        const password = prompt('กรุณาใส่รหัสผ่าน ADMIN:');
+        if (password === ADMIN_PASSWORD) {
+          isAdmin = true;
+          updateAdminUI();
+          showNotification('ล็อกอิน ADMIN สำเร็จ', 'success');
+        } else if (password !== null) {
+          alert('รหัสผ่านไม่ถูกต้อง');
+        }
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('ต้องการล็อกเอาท์จากระบบ ADMIN หรือไม่?')) {
+        isAdmin = false;
+        updateAdminUI();
+        showNotification('ล็อกเอาท์จากระบบ ADMIN เรียบร้อย', 'info');
+      }
+    }
+
+    function updateAdminUI() {
+      const adminBtn = document.getElementById('adminBtn');
+      const adminBtnText = document.getElementById('adminBtnText');
+      const exportBtn = document.getElementById('exportBtn');
+      const importBtn = document.getElementById('importBtn');
+      const clearBtn = document.getElementById('clearBtn');
+
+      if (isAdmin) {
+        adminBtn.className = 'px-3 py-2 md:px-4 md:py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 btn-transition text-sm md:text-base';
+        adminBtnText.textContent = 'LOGOUT';
+        exportBtn.disabled = false;
+        importBtn.disabled = false;
+        clearBtn.disabled = false;
+      } else {
+        adminBtn.className = 'px-3 py-2 md:px-4 md:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 btn-transition text-sm md:text-base';
+        adminBtnText.textContent = 'ADMIN';
+        exportBtn.disabled = true;
+        importBtn.disabled = true;
+        clearBtn.disabled = true;
+      }
+    }
+
+    // ส่งออกไฟล์ EXCEL
+    function exportToExcel() {
+      if (!isAdmin) {
+        alert('ต้องล็อกอิน ADMIN เท่านั้นที่สามารถส่งออกข้อมูลได้');
+        return;
+      }
+
+      const filteredEmployees = getFilteredEmployees();
+      
+      if (filteredEmployees.length === 0) {
+        alert('ไม่มีข้อมูลสำหรับส่งออก');
+        return;
+      }
+
+      const wsData = [
+        ['ลำดับ', 'รหัสพนักงาน', 'กะ', 'MFG', 'วันที่เช็คอิน', 'เวลาเช็คอิน', 'พักกลางวัน(นาที)', 'จำนวนครั้ง', 'ห้องน้ำ(นาที)', 'จำนวนครั้ง', 'พักเบรก(นาที)', 'จำนวนครั้ง', 'สถานะปัจจุบัน', 'สถานะ']
+      ];
+      
+      // ฟังก์ชันแปลงนาทีเป็นรูปแบบชั่วโมง:นาทีสำหรับ EXCEL
+      function formatDurationForExcel(minutes) {
+        if (minutes >= 60) {
+          const hours = Math.floor(minutes / 60);
+          const mins = minutes % 60;
+          return `${hours}ชม ${mins}นาที`;
+        }
+        return `${minutes}นาที`;
+      }
+
+      filteredEmployees.forEach((record, index) => {
+        const checkInDate = new Date(record.checkInTime);
+        const lunchTotalTime = record.lunchBreak?.duration || 0;
+        const lunchCount = record.lunchBreak?.start ? 1 : 0;
+        const bathroomTotalTime = record.bathroomVisits.reduce((sum, b) => sum + (b.duration || 0), 0);
+        const bathroomCount = record.bathroomVisits.length;
+        const breakTotalTime = record.breaks.reduce((sum, b) => sum + (b.duration || 0), 0);
+        const breakCount = record.breaks.length;
+        
+        let currentActionText = 'ปฏิบัติงาน';
+        if (record.currentAction === 'lunch') currentActionText = 'พักกลางวัน';
+        else if (record.currentAction === 'bathroom') currentActionText = 'ห้องน้ำ';
+        else if (record.currentAction === 'break') currentActionText = 'พักเบรก';
+
+        wsData.push([
+          index + 1,
+          record.id,
+          record.shift,
+          record.mfg,
+          checkInDate.toLocaleDateString('th-TH'),
+          checkInDate.toLocaleTimeString('th-TH'),
+          formatDurationForExcel(lunchTotalTime),
+          lunchCount,
+          formatDurationForExcel(bathroomTotalTime),
+          bathroomCount,
+          formatDurationForExcel(breakTotalTime),
+          breakCount,
+          currentActionText,
+          record.status
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'รายการพนักงาน');
+      
+      const fileName = `พนักงาน_${selectedShift}_${selectedMFG}_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      showNotification('ส่งออกไฟล์ EXCEL เรียบร้อย', 'success');
+    }
+
+    // นำเข้าไฟล์ CSV
+    function importCSV() {
+      if (!isAdmin) {
+        alert('ต้องล็อกอิน ADMIN เท่านั้นที่สามารถนำเข้าข้อมูลได้');
+        return;
+      }
+
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.csv';
+      
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const csv = e.target.result;
+            const lines = csv.split('\n');
+            let importedCount = 0;
+            
+            lines.forEach((line, index) => {
+              if (index === 0 || !line.trim()) return; // ข้ามส่วนหัวและบรรทัดว่าง
+              
+              const parts = line.split(',');
+              if (parts.length >= 2) {
+                const employeeId = parts[1].trim().replace(/"/g, '');
+                if (employeeId) {
+                  // เพิ่มข้อมูลพนักงาน
+                  if (!employeeDatabase[employeeId]) {
+                    employeeDatabase[employeeId] = `พนักงาน ${employeeId}`;
+                  }
+                  
+                  // สร้าง check-in record ถ้ายังไม่มี
+                  const key = getEmployeeKey(employeeId, 'A', 'MFG-1');
+                  if (!employees[key]) {
+                    employees[key] = {
+                      id: employeeId,
+                      name: employeeDatabase[employeeId],
+                      shift: 'A',
+                      mfg: 'MFG-1',
+                      checkInTime: new Date().toISOString(),
+                      breaks: [],
+                      bathroomVisits: [],
+                      lunchBreak: null,
+                      status: 'ปกติ',
+                      currentAction: null,
+                      lastUpdate: new Date().toISOString()
+                    };
+                    importedCount++;
+                  }
+                }
+              }
+            });
+            
+            saveData();
+            saveEmployeeDatabase();
+            renderEmployeeTable();
+            updateStats();
+            
+            if (importedCount > 0) {
+              showNotification(`นำเข้าข้อมูลพนักงานสำเร็จ ${importedCount} คน`, 'success');
+            } else {
+              alert('ไม่พบข้อมูลพนักงานที่สามารถนำเข้าได้');
+            }
+          } catch (error) {
+            alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV');
+          }
+        };
+        
+        reader.readAsText(file);
+      };
+      
+      input.click();
+    }
+
+    function saveEmployeeDatabase() {
+      localStorage.setItem('terahop_employee_db', JSON.stringify(employeeDatabase));
+    }
+
+    // ล้างข้อมูลทั้งหมด
+    function clearAllData() {
+      if (!isAdmin) {
+        alert('ต้องล็อกอิน ADMIN เท่านั้นที่สามารถล้างข้อมูลได้');
+        return;
+      }
+
+      if (confirm('ต้องการล้างข้อมูลทั้งหมดหรือไม่?')) {
+        employees = {};
+        selectedEmployees = {};
+        batchEmployees = [];
+        localStorage.removeItem('terahop_employees');
+        localStorage.removeItem('terahop_selected_employees');
+        localStorage.removeItem('batchEmployees');
+        renderEmployeeTable();
+        renderBatchEmployeeList();
+        updateStats();
+        showNotification('ล้างข้อมูลทั้งหมดเรียบร้อย', 'info');
+      }
+    }
+
+    // สลับธีม
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+    }
+
+    // ฟังก์ชันสำหรับรับข้อความจาก batch form
+    function setupMessageListener() {
+      window.addEventListener('message', function(event) {
+        if (event.data.type === 'batch_employees_import') {
+          // Update batch employees from the message data
+          batchEmployees = event.data.data;
+          localStorage.setItem('batchEmployees', JSON.stringify(batchEmployees));
+          
+          // Update employee database with names from batch data
+          batchEmployees.forEach(emp => {
+            if (emp.name && emp.code) {
+              employeeDatabase[emp.code] = emp.name;
+            }
+          });
+          saveEmployeeDatabase();
+          
+          renderBatchEmployeeList();
+          updateStats();
+          showNotification('รับข้อมูลพนักงานจาก BATCH INPUT เรียบร้อยแล้ว', 'success');
+        }
+      });
+    }
+
+    // ฟังก์ชันตรวจสอบการอัปเดต batch employees
+    function checkForBatchUpdates() {
+      const stored = localStorage.getItem('batchEmployees');
+      if (stored) {
+        const newBatchEmployees = JSON.parse(stored);
+        // Check if there are new employees
+        if (JSON.stringify(newBatchEmployees) !== JSON.stringify(batchEmployees)) {
+          batchEmployees = newBatchEmployees;
+          
+          // Update employee database with names from batch data
+          batchEmployees.forEach(emp => {
+            if (emp.name && emp.code) {
+              employeeDatabase[emp.code] = emp.name;
+            }
+          });
+          saveEmployeeDatabase();
+          
+          renderBatchEmployeeList();
+          updateStats();
+          showNotification('พบข้อมูลพนักงานใหม่จาก BATCH INPUT', 'success');
+        }
+      }
+    }
+
+    // แสดงการแจ้งเตือน
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 fade-in ${
+        type === 'success' ? 'bg-green-600' : 
+        type === 'error' ? 'bg-red-600' : 
+        'bg-blue-600'
+      }`;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // เริ่มต้นแอปพลิเคชันเมื่อโหลดหน้า
+    document.addEventListener('DOMContentLoaded', init);
+
+    // ปิด modal เมื่อคลิกนอกพื้นที่
+    document.getElementById('activityModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeActivityModal();
+      }
+    });
+
+    // ปิด modal เมื่อกด ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeActivityModal();
+      }
+    });
+  </script>
+</body>
+</html>

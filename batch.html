@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เพิ่มพนักงาน - TERAHOP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: none;
+            text-transform: uppercase;
+        }
+        input, select {
+            -webkit-user-select: text;
+            user-select: text;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .btn-active:active {
+            transform: scale(0.95);
+        }
+        .btn-transition {
+            transition: all 0.2s ease;
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-4 max-w-6xl">
+        <!-- Header -->
+        <header class="bg-green-600 text-white p-4 rounded-lg mb-6">
+            <h1 class="text-xl md:text-2xl font-bold text-center">เพิ่มพนักงานรายการ</h1>
+            <p class="text-sm text-center mt-2">กรอกข้อมูลพนักงานเพื่อเพิ่มเข้าสู่ระบบ TERAHOP</p>
+        </header>
+
+        <!-- Form Section -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+            <form id="employeeForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- รหัสพนักงาน -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน</label>
+                        <input type="text" id="employeeId" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                               placeholder="ตัวอย่าง: C20001">
+                    </div>
+
+                    <!-- ชื่อ-นามสกุล -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
+                        <input type="text" id="employeeName" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                               placeholder="กรอกชื่อ-นามสกุลพนักงาน">
+                    </div>
+
+                    <!-- กะ -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">กะ</label>
+                        <select id="employeeShift" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                            <option value="">เลือกกะ</option>
+                            <option value="A">กะ A</option>
+                            <option value="B">กะ B</option>
+                        </select>
+                    </div>
+
+                    <!-- MFG -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">MFG</label>
+                        <select id="employeeMFG" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                            <option value="">เลือก MFG</option>
+                            <option value="MFG-1">MFG-1</option>
+                            <option value="MFG-2">MFG-2</option>
+                            <option value="MFG-3">MFG-3</option>
+                            <option value="MFG-4">MFG-4</option>
+                            <option value="MFG-5">MFG-5</option>
+                            <option value="MFG-6">MFG-6</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 mt-6">
+                    <button type="button" onclick="addSingleEmployee()"
+                            class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 btn-transition text-sm font-medium">
+                        添加员工 (เพิ่มพนักงาน)
+                    </button>
+                    <button type="button" onclick="clearForm()"
+                            class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 btn-transition text-sm font-medium">
+                        清除数据 (ล้างข้อมูล)
+                    </button>
+                </div>
+
+                <!-- Batch Add Section -->
+                <div class="border-t pt-4 mt-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">เพิ่มพนักงานหลายคน (คัดลอกวาง)</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">
+                                รหัสพนัักงาน (คั่นด้วย comma หรือบรรทัดใหม่)
+                                <span class="text-gray-500">ตัวอย่าง: C20001,C20002,C20003</span>
+                            </label>
+                            <textarea id="batchEmployeeIds" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                      placeholder="C20001,C20002,C20003&#10;หรือ&#10;C20001&#10;C20002&#10;C20003"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">กะ (สำหรับทุกคน)</label>
+                                <select id="batchShift" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                                    <option value="">เลือกกะ</option>
+                                    <option value="A">กะ A</option>
+                                    <option value="B">กะ B</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">MFG (สำหรับทุกคน)</label>
+                                <select id="batchMFG" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                                    <option value="">เลือก MFG</option>
+                                    <option value="MFG-1">MFG-1</option>
+                                    <option value="MFG-2">MFG-2</option>
+                                    <option value="MFG-3">MFG-3</option>
+                                    <option value="MFG-4">MFG-4</option>
+                                    <option value="MFG-5">MFG-5</option>
+                                    <option value="MFG-6">MFG-6</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" onclick="addBatchEmployees()"
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 btn-transition text-sm font-medium">
+                            批量添加员工 (เพิ่มพนักงานหลายคน)
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Employee List -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mt-6">
+            <h2 class="text-lg font-semibold mb-4">รายชื่อพนักงานที่เพิ่ม</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left">ลำดับ</th>
+                            <th class="px-4 py-2 text-left">รหัสพนักงาน</th>
+                            <th class="px-4 py-2 text-left">ชื่อ-นามสกุล</th>
+                            <th class="px-4 py-2 text-left">กะ</th>
+                            <th class="px-4 py-2 text-left">MFG</th>
+                            <th class="px-4 py-2 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeList" class="divide-y divide-gray-200">
+                        <!-- Employee rows will be added here -->
+                    </tbody>
+                </table>
+                <div id="emptyMessage" class="text-center py-8 text-gray-500">
+                    ยังไม่มีรายชื่อพนักงาน กรุณาเพิ่มพนักงาน
+                </div>
+            </div>
+
+            <!-- Export Button -->
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <button onclick="exportToMain()" 
+                        class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 btn-transition text-sm font-medium">
+                    导出到主系统 (ส่งข้อมูลไปยังระบบหลัก)
+                </button>
+                <button onclick="exportToCSV()" 
+                        class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 btn-transition text-sm font-medium">
+                    导出CSV (ส่งออก CSV)
+                </button>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-blue-50 rounded-lg p-4 mt-6">
+            <h3 class="font-semibold text-sm mb-2">วิธีการใช้งาน:</h3>
+            <ol class="text-xs space-y-1 list-decimal list-inside">
+                <li>กรอกข้อมูลพนักงานให้ครบถ้วน (เพิ่มรายบุคคล)</li>
+                <li>หรือใช้การเพิ่มพนักงานหลายคนโดยคัดลอกรหัสพนักงานมาวาง</li>
+                <li>คลิก "เพิ่มพนักงาน" เพื่อเพิ่มรายชื่อในตาราง</li>
+                <li>คลิก "เพิ่มพนักงานหลายคน" เพื่อเพิ่มรายชื่อแบบ批量</li>
+                <li>คลิก "ส่งข้อมูลไปยังระบบหลัก" เพื่อนำข้อมูลไปใช้ในระบบ TERAHOP</li>
+                <li>หรือคลิก "ส่งออก CSV" เพื่อดาวน์โหลดไฟล์ CSV</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let employees = [];
+        let employeeIdCounter = 1;
+
+        // Load employees from localStorage
+        function loadEmployees() {
+            const saved = localStorage.getItem('terahop_batch_employees');
+            if (saved) {
+                employees = JSON.parse(saved);
+                employeeIdCounter = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+            }
+            renderEmployeeList();
+        }
+
+        // Save employees to localStorage
+        function saveEmployees() {
+            localStorage.setItem('terahop_batch_employees', JSON.stringify(employees));
+        }
+
+        // Form submission
+        document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const employee = {
+                id: employeeIdCounter++,
+                employeeId: document.getElementById('employeeId').value.toUpperCase(),
+                name: document.getElementById('employeeName').value.toUpperCase(),
+                shift: document.getElementById('employeeShift').value,
+                mfg: document.getElementById('employeeMFG').value
+            };
+
+            // Check for duplicate ID
+            if (employees.some(emp => emp.employeeId === employee.employeeId)) {
+                alert('รหัสพนักงานนี้มีอยู่แล้วในระบบ');
+                return;
+            }
+
+            employees.push(employee);
+            saveEmployees();
+            renderEmployeeList();
+            clearForm();
+            
+            // Show success message
+            showNotification('เพิ่มพนักงานเรียบร้อยแล้ว', 'success');
+        });
+
+        // Add single employee function (callable from button)
+        function addSingleEmployee() {
+            const employeeId = document.getElementById('employeeId').value.trim().toUpperCase();
+            const employeeName = document.getElementById('employeeName').value.trim().toUpperCase();
+            const employeeShift = document.getElementById('employeeShift').value;
+            const employeeMFG = document.getElementById('employeeMFG').value;
+            
+            if (!employeeId || !employeeName || !employeeShift || !employeeMFG) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            
+            const employee = {
+                id: employeeIdCounter++,
+                employeeId: employeeId,
+                name: employeeName,
+                shift: employeeShift,
+                mfg: employeeMFG
+            };
+
+            // Check for duplicate ID
+            if (employees.some(emp => emp.employeeId === employee.employeeId)) {
+                alert('รหัสพนักงานนี้มีอยู่แล้วในระบบ');
+                return;
+            }
+
+            employees.push(employee);
+            saveEmployees();
+            renderEmployeeList();
+            clearForm();
+            
+            // Show success message
+            showNotification('เพิ่มพนักงานเรียบร้อยแล้ว', 'success');
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('employeeForm').reset();
+        }
+
+        // Render employee list
+        function renderEmployeeList() {
+            const tbody = document.getElementById('employeeList');
+            const emptyMessage = document.getElementById('emptyMessage');
+            
+            if (employees.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            
+            emptyMessage.style.display = 'none';
+            tbody.innerHTML = employees.map(emp => `
+                <tr>
+                    <td class="px-4 py-2">${emp.id}</td>
+                    <td class="px-4 py-2">${emp.employeeId}</td>
+                    <td class="px-4 py-2">${emp.name}</td>
+                    <td class="px-4 py-2">${emp.shift}</td>
+                    <td class="px-4 py-2">${emp.mfg}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button onclick="removeEmployee(${emp.id})" 
+                                class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 btn-transition">
+                            删除 (ลบ)
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Remove employee
+        function removeEmployee(id) {
+            if (confirm('คุณต้องการลบพนักงานคนนี้ใช่หรือไม่?')) {
+                employees = employees.filter(emp => emp.id !== id);
+                saveEmployees();
+                renderEmployeeList();
+                showNotification('ลบพนักงานเรียบร้อยแล้ว', 'error');
+            }
+        }
+
+        // Export to main system
+        function exportToMain() {
+            if (employees.length === 0) {
+                alert('ไม่มีข้อมูลพนักงานที่จะส่ง');
+                return;
+            }
+
+            // Convert to format expected by main system - include both ID and name
+            const batchEmployeesFormat = employees.map(emp => ({
+                code: emp.employeeId,
+                name: emp.name,
+                shift: emp.shift,
+                mfg: emp.mfg,
+                selected: false
+            }));
+
+            // Store in localStorage for main system to pick up
+            localStorage.setItem('batchEmployees', JSON.stringify(batchEmployeesFormat));
+            
+            // Also store in employee database for main system
+            const employeeDatabase = {};
+            batchEmployeesFormat.forEach(emp => {
+                employeeDatabase[emp.code] = emp.name;
+            });
+            localStorage.setItem('terahop_employee_db', JSON.stringify(employeeDatabase));
+            
+            // Notify parent window if exists
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'batch_employees_import',
+                    data: batchEmployeesFormat
+                }, '*');
+            }
+            
+            showNotification('ส่งข้อมูลไปยังระบบหลักเรียบร้อยแล้ว', 'success');
+            
+            // Close window after delay
+            setTimeout(() => {
+                if (window.opener) {
+                    window.close();
+                }
+            }, 2000);
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            if (employees.length === 0) {
+                alert('ไม่มีข้อมูลพนักงานที่จะส่งออก');
+                return;
+            }
+
+            const headers = ['รหัสพนักงาน', 'ชื่อ-นามสกุล', 'กะ', 'MFG'];
+            const csvContent = [
+                headers.join(','),
+                ...employees.map(emp => 
+                    [emp.employeeId, emp.name, emp.shift, emp.mfg].join(',')
+                )
+            ].join('\n');
+
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `พนักงาน_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('ส่งออกไฟล์ CSV เรียบร้อยแล้ว', 'success');
+        }
+
+        // Add batch employees
+        function addBatchEmployees() {
+            const batchIds = document.getElementById('batchEmployeeIds').value.trim();
+            const batchShift = document.getElementById('batchShift').value;
+            const batchMFG = document.getElementById('batchMFG').value;
+            
+            if (!batchIds || !batchShift || !batchMFG) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน (รหัสพนักงาน, กะ, MFG)');
+                return;
+            }
+            
+            // Parse employee IDs (support comma separated or new line separated)
+            const ids = batchIds.split(/[,\\n]+/).map(id => id.trim()).filter(id => id);
+            
+            if (ids.length === 0) {
+                alert('กรุณากรอกรหัสพนักงานอย่างน้อย 1 รหัส');
+                return;
+            }
+            
+            let addedCount = 0;
+            let duplicateCount = 0;
+            
+            ids.forEach(employeeId => {
+                const formattedId = employeeId.toUpperCase();
+                
+                // Check for duplicate
+                if (employees.some(emp => emp.employeeId === formattedId)) {
+                    duplicateCount++;
+                    return;
+                }
+                
+                const employee = {
+                    id: employeeIdCounter++,
+                    employeeId: formattedId,
+                    name: formattedId, // Use ID as name for batch add
+                    shift: batchShift,
+                    mfg: batchMFG
+                };
+                
+                employees.push(employee);
+                addedCount++;
+            });
+            
+            if (addedCount > 0) {
+                saveEmployees();
+                renderEmployeeList();
+                
+                // Clear batch form
+                document.getElementById('batchEmployeeIds').value = '';
+                document.getElementById('batchShift').value = '';
+                document.getElementById('batchMFG').value = '';
+                
+                let message = `เพิ่มพนักงาน ${addedCount} คนเรียบร้อยแล้ว`;
+                if (duplicateCount > 0) {
+                    message += ` (ข้าม ${duplicateCount} รหัสที่ซ้ำ)`;
+                }
+                showNotification(message, 'success');
+            } else if (duplicateCount > 0) {
+                alert(`รหัสพนักงานทั้งหมด ${duplicateCount} รหัสซ้ำในระบบ`);
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white text-sm z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmployees();
+        });
+    </script>
+</body>
+</html>
